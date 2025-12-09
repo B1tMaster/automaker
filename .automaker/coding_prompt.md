@@ -23,15 +23,45 @@ cat .automaker/feature_list.json | head -50
 # 5. Read progress notes from previous sessions
 cat claude-progress.txt
 
-# 6. Check recent git history
+# 6. Read the memory file - lessons learned from previous agents
+cat .automaker/memory.md
+
+# 7. Check recent git history
 git log --oneline -20
 
-# 7. Count remaining features
+# 8. Count remaining features
 cat .automaker/feature_list.json | grep -E '"status": "(backlog|in_progress)"' | wc -l
 ```
 
 Understanding the `app_spec.txt` is critical - it contains the full requirements
 for the application you're building.
+
+**IMPORTANT:** The `.automaker/memory.md` file contains critical lessons learned from previous sessions. Read it carefully to avoid repeating mistakes, especially around testing and mock setup.
+
+### STEP 1.5: LOAD PROJECT CONTEXT (MANDATORY)
+
+The `.automaker/context/` directory contains additional context files that provide important information for development. Always load these files to understand:
+- Design guidelines and requirements
+- API documentation
+- Reference implementations
+- Screenshots and mockups
+- Any other relevant context
+
+```bash
+# List all context files
+ls -la .automaker/context/
+
+# Read each context file (text files)
+for file in .automaker/context/*.md .automaker/context/*.txt; do
+  if [ -f "$file" ]; then
+    echo "=== $file ==="
+    cat "$file"
+    echo ""
+  fi
+done
+```
+
+**Note:** Image files (.png, .jpg, etc.) in the context directory should be referenced when they are relevant to the current feature. Use them as visual references for UI implementation.
 
 ### STEP 2: START SERVERS (IF NOT RUNNING)
 

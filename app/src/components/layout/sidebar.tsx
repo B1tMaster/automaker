@@ -24,6 +24,7 @@ import {
   Cpu,
   ChevronDown,
   Check,
+  BookOpen,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -68,6 +69,7 @@ export function Sidebar() {
       label: "Tools",
       items: [
         { id: "spec", label: "Spec Editor", icon: FileText },
+        { id: "context", label: "Context", icon: BookOpen },
         { id: "code", label: "Code View", icon: Code },
         { id: "analysis", label: "Analysis", icon: Search },
         { id: "tools", label: "Agent Tools", icon: Wrench },

@@ -60,7 +60,8 @@ export interface AutoModeEvent {
 export interface AutoModeAPI {
   start: (projectPath: string) => Promise<{ success: boolean; error?: string }>;
   stop: () => Promise<{ success: boolean; error?: string }>;
-  status: () => Promise<{ success: boolean; isRunning?: boolean; currentFeatureId?: string | null; error?: string }>;
+  stopFeature: (featureId: string) => Promise<{ success: boolean; error?: string }>;
+  status: () => Promise<{ success: boolean; isRunning?: boolean; currentFeatureId?: string | null; runningFeatures?: string[]; error?: string }>;
   runFeature: (projectPath: string, featureId: string) => Promise<{ success: boolean; passes?: boolean; error?: string }>;
   verifyFeature: (projectPath: string, featureId: string) => Promise<{ success: boolean; passes?: boolean; error?: string }>;
   resumeFeature: (projectPath: string, featureId: string) => Promise<{ success: boolean; passes?: boolean; error?: string }>;
@@ -78,6 +79,7 @@ export interface ElectronAPI {
   readdir: (dirPath: string) => Promise<ReaddirResult>;
   exists: (filePath: string) => Promise<boolean>;
   stat: (filePath: string) => Promise<StatResult>;
+  deleteFile: (filePath: string) => Promise<WriteResult>;
   getPath: (name: string) => Promise<string>;
   autoMode?: AutoModeAPI;
 }
@@ -141,8 +143,8 @@ export const getElectronAPI = (): ElectronAPI => {
     },
 
     readFile: async (filePath: string) => {
-      // Check mock file system
-      if (mockFileSystem[filePath]) {
+      // Check mock file system first
+      if (mockFileSystem[filePath] !== undefined) {
         return { success: true, content: mockFileSystem[filePath] };
       }
       // Return mock data based on file type
@@ -154,6 +156,10 @@ export const getElectronAPI = (): ElectronAPI => {
           success: true,
           content: "<project_specification>\n  <project_name>Demo Project</project_name>\n</project_specification>",
         };
+      }
+      // For any file in mock context directory, return empty string (file exists but is empty)
+      if (filePath.includes(".automaker/context/")) {
+        return { success: true, content: "" };
       }
       return { success: false, error: "File not found (mock)" };
     },
@@ -170,14 +176,30 @@ export const getElectronAPI = (): ElectronAPI => {
     readdir: async (dirPath: string) => {
       // Return mock directory structure based on path
       if (dirPath) {
+        // Check if this is the context directory - return files from mock file system
+        if (dirPath.includes(".automaker/context")) {
+          const contextFiles = Object.keys(mockFileSystem)
+            .filter(path => path.startsWith(dirPath) && path !== dirPath)
+            .map(path => {
+              const name = path.substring(dirPath.length + 1); // +1 for the trailing slash
+              return {
+                name,
+                isDirectory: false,
+                isFile: true,
+              };
+            })
+            .filter(entry => !entry.name.includes("/")); // Only direct children
+          return { success: true, entries: contextFiles };
+        }
         // Root level
-        if (!dirPath.includes("/src") && !dirPath.includes("/tests") && !dirPath.includes("/public")) {
+        if (!dirPath.includes("/src") && !dirPath.includes("/tests") && !dirPath.includes("/public") && !dirPath.includes(".automaker")) {
           return {
             success: true,
             entries: [
               { name: "src", isDirectory: true, isFile: false },
               { name: "tests", isDirectory: true, isFile: false },
               { name: "public", isDirectory: true, isFile: false },
+              { name: ".automaker", isDirectory: true, isFile: false },
               { name: "package.json", isDirectory: false, isFile: true },
               { name: "tsconfig.json", isDirectory: false, isFile: true },
               { name: "app_spec.txt", isDirectory: false, isFile: true },
@@ -276,6 +298,11 @@ export const getElectronAPI = (): ElectronAPI => {
       };
     },
 
+    deleteFile: async (filePath: string) => {
+      delete mockFileSystem[filePath];
+      return { success: true };
+    },
+
     getPath: async (name: string) => {
       if (name === "userData") {
         return "/mock/userData";
@@ -320,11 +347,38 @@ function createMockAutoModeAPI(): AutoModeAPI {
       return { success: true };
     },
 
+    stopFeature: async (featureId: string) => {
+      if (!mockRunningFeatures.has(featureId)) {
+        return { success: false, error: `Feature ${featureId} is not running` };
+      }
+
+      // Clear the timeout for this specific feature
+      const timeout = mockAutoModeTimeouts.get(featureId);
+      if (timeout) {
+        clearTimeout(timeout);
+        mockAutoModeTimeouts.delete(featureId);
+      }
+
+      // Remove from running features
+      mockRunningFeatures.delete(featureId);
+
+      // Emit a stopped event
+      emitAutoModeEvent({
+        type: "auto_mode_feature_complete",
+        featureId,
+        passes: false,
+        message: "Feature stopped by user",
+      });
+
+      return { success: true };
+    },
+
     status: async () => {
       return {
         success: true,
         isRunning: mockAutoModeRunning,
         currentFeatureId: mockAutoModeRunning ? "feature-0" : null,
+        runningFeatures: Array.from(mockRunningFeatures),
       };
     },
 

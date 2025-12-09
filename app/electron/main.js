@@ -146,6 +146,15 @@ ipcMain.handle("fs:stat", async (_, filePath) => {
   }
 });
 
+ipcMain.handle("fs:deleteFile", async (_, filePath) => {
+  try {
+    await fs.unlink(filePath);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 // App data path
 ipcMain.handle("app:getPath", (_, name) => {
   return app.getPath(name);

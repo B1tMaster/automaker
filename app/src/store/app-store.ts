@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Project } from "@/lib/electron";
 
-export type ViewMode = "welcome" | "spec" | "board" | "code" | "agent" | "settings" | "analysis" | "tools" | "interview";
+export type ViewMode = "welcome" | "spec" | "board" | "code" | "agent" | "settings" | "analysis" | "tools" | "interview" | "context";
 export type ThemeMode = "light" | "dark" | "system";
 
 export interface ApiKeys {

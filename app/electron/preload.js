@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   readdir: (dirPath) => ipcRenderer.invoke("fs:readdir", dirPath),
   exists: (filePath) => ipcRenderer.invoke("fs:exists", filePath),
   stat: (filePath) => ipcRenderer.invoke("fs:stat", filePath),
+  deleteFile: (filePath) => ipcRenderer.invoke("fs:deleteFile", filePath),
 
   // App APIs
   getPath: (name) => ipcRenderer.invoke("app:getPath", name),

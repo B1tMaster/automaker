@@ -4,7 +4,7 @@
     "category": "Core",
     "description": "add a context feature / route which allows users to upload files or images or text which will persist to .automaker/context. there should be a left panel with all context files and a text editor or image previewer that lets users view edit delete the context.  include the context in every single coding prompt or improve the coding_prompt.md to have a phase where it loads in that context",
     "steps": [],
-    "status": "in_progress"
+    "status": "verified"
   },
   {
     "id": "feature-1765260287663-pnwg0wfgz",
@@ -37,7 +37,7 @@
     "category": "Kanban",
     "description": "show a error toast when concurrency limit is hit and someone tries to drag a card into in progress to give them feedback why it won't work.",
     "steps": [],
-    "status": "verified"
+    "status": "backlog"
   },
   {
     "id": "feature-1765260791341-iaxxt172n",
